@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import AuthService from '../services/auth.service';
 import '../styles/Auth.css';
 
 function Login() {
@@ -18,13 +18,10 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5001/api/auth/login', {
-        email,
-        password
-      });
-      console.log('Login successful:', response.data);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      const data = await AuthService.login(email, password);
+      console.log('Login successful:', data);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       navigate('/');
     } catch (err) {
       console.error('Login attempt failed:', err);

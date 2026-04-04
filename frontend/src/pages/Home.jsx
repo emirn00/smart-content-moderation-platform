@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import AuthService from '../services/auth.service'
 import '../App.css'
 
 function Home() {
@@ -9,8 +9,8 @@ function Home() {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/health')
-        setHealth(response.data)
+        const data = await AuthService.checkHealth()
+        setHealth(data)
       } catch (error) {
         console.error('Error fetching health status:', error)
         setHealth({ status: 'Error', message: 'Could not connect to backend' })
