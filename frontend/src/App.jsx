@@ -9,7 +9,7 @@ function App() {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/health')
+        const response = await axios.get('http://localhost:5000/api/health')
         setHealth(response.data)
       } catch (error) {
         console.error('Error fetching health status:', error)
@@ -44,7 +44,7 @@ function App() {
                 <h3>{health?.status === 'OK' ? 'Backend Connected' : 'Connection Failed'}</h3>
               </div>
               <p className="status-message">{health?.message}</p>
-              <p className="port-info">Targeting: <code>http://localhost:5001/api/health</code></p>
+              <p className="port-info">Targeting: <code>http://localhost:5000/api/health</code></p>
             </div>
           )}
         </section>
