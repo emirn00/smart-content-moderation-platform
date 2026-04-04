@@ -29,6 +29,16 @@ function Navbar() {
             <span>Home</span>
           </Link>
 
+          {isAuthenticated && user?.role === 'MODERATOR' && (
+            <Link 
+              to="/moderator" 
+              className={`nav-item ${location.pathname === '/moderator' ? 'active' : ''}`}
+            >
+              <Shield size={18} />
+              <span>Dashboard</span>
+            </Link>
+          )}
+
           {isAuthenticated ? (
             <>
               <div className="nav-user">

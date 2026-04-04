@@ -12,9 +12,11 @@ app.use(express.json());
 // ─── Routes ──────────────────────────────────────────────────────────────────
 const authRoutes    = require('./routes/authRoutes');
 const contentRoutes = require('./routes/contentRoutes');
+const moderationRoutes = require('./routes/moderationRoutes');
 
 app.use('/api/auth',     authRoutes);
 app.use('/api/contents', contentRoutes);
+app.use('/api/moderation', moderationRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 const { PrismaClient } = require('@prisma/client');
