@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthService from '../services/auth.service';
+import { useAuth } from '../context/AuthContext';
 import '../styles/Auth.css';
 
 function Login() {
@@ -11,6 +12,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,8 +22,7 @@ function Login() {
     try {
       const data = await AuthService.login(email, password);
       console.log('Login successful:', data);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      login(data.token, data.user);
       navigate('/');
     } catch (err) {
       console.error('Login attempt failed:', err);

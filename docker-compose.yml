@@ -23,6 +23,18 @@ services:
     volumes:
       - redisdata:/data
 
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: ai_service
+    restart: always
+    ports:
+      - "5002:5002"
+    environment:
+      PORT: 5002
+      NODE_ENV: production
+
   api:
     build: 
       context: ./backend
@@ -37,9 +49,11 @@ services:
       REDIS_PORT: 6379
       PORT: 5001
       NODE_ENV: development
+      AI_SERVICE_URL: http://ai-service:5002
     depends_on:
       - db
       - redis
+      - ai-service
     command: npm run dev
 
   web:
@@ -56,3 +70,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+

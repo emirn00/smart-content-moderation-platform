@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Mail, Lock, UserPlus, Shield, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthService from '../services/auth.service';
+import { useAuth } from '../context/AuthContext';
 import '../styles/Auth.css';
 
 function Register() {
@@ -12,6 +13,7 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -21,9 +23,8 @@ function Register() {
     try {
       const data = await AuthService.register(email, password, role);
       console.log('Registration successful:', data);
-      // Automatically log them in by saving token and redirecting
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Immediately log the user in after registration
+      login(data.token, data.user);
       navigate('/');
     } catch (err) {
       console.error('Register attempt failed:', err);
