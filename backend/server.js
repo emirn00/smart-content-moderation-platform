@@ -40,18 +40,35 @@ worker.on('failed', (job, err) => {
 app.use(cors());
 app.use(express.json());
 
+const authRoutes = require('./routes/authRoutes');
+
 // Routes
+app.use('/api/auth', authRoutes);
+
 app.get('/', (req, res) => {
   res.send('API is running with BullMQ and Redis...');
 });
 
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'Backend is healthy',
-    queue: 'BullMQ Queue Ready'
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ 
+      status: 'OK', 
+      message: 'Backend is healthy',
+      database: 'Connected via Prisma',
+      queue: 'BullMQ Queue Ready'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'Error', 
+      message: 'Database connection failed',
+      error: error.message 
+    });
+  }
 });
 
 
