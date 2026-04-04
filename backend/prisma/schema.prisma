@@ -18,12 +18,56 @@ enum Role {
   MODERATOR
 }
 
+enum ContentType {
+  TEXT
+  IMAGE
+}
+
+enum ContentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FLAGGED
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
   password  String
   name      String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      Role      @default(USER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  contents  Content[]
 }
+
+model Content {
+  id               Int                @id @default(autoincrement())
+  userId           Int
+  user             User               @relation(fields: [userId], references: [id])
+  type             ContentType
+  body             String? // Text content
+  filename         String? // Image filename
+  mimeType         String? // e.g. image/jpeg
+  sizeBytes        Int? // File size in bytes
+  status           ContentStatus      @default(PENDING)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  aiAnalysisResult AiAnalysisResult?
+}
+
+model AiAnalysisResult {
+  id                 Int      @id @default(autoincrement())
+  contentId          Int      @unique
+  content            Content  @relation(fields: [contentId], references: [id])
+  verdict            String
+  toxicityScore      Float
+  confidence         Float
+  detectedCategories String[]
+  categoryScores     Json
+  model              String
+  analyzedAt         DateTime
+  createdAt          DateTime @default(now())
+}
+
+

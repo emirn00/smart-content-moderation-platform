@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
-import { FileText, Image, Upload, Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import { FileText, Image, Upload, Lock, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ContentService from '../services/content.service';
 import './SubmitContent.css';
 
 const MAX_FILE_SIZE_MB = 5;
@@ -14,7 +15,7 @@ function SubmitContent() {
   const [text, setText] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitResult, setSubmitResult] = useState(null); // { contentId, jobId }
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -58,14 +59,28 @@ function SubmitContent() {
 
     setLoading(true);
 
-    // Simulate API call — real endpoint will be wired in next step
-    await new Promise((res) => setTimeout(res, 1200));
-    setLoading(false);
-    setSubmitted(true);
+    try {
+      let result;
+      if (contentType === 'text') {
+        result = await ContentService.submitText(text.trim());
+      } else {
+        result = await ContentService.submitImage(
+          imageFile.name,
+          imageFile.type,
+          imageFile.size
+        );
+      }
+      setSubmitResult(result);
+    } catch (err) {
+      console.error('Submit failed:', err);
+      setError(err.response?.data?.message || 'Failed to submit content. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
-    setSubmitted(false);
+    setSubmitResult(null);
     setText('');
     setImageFile(null);
     setImagePreview(null);
@@ -73,17 +88,37 @@ function SubmitContent() {
     setContentType('text');
   };
 
-  if (submitted) {
+  // ─── Success Screen ────────────────────────────────────────────────────────
+  if (submitResult) {
     return (
       <div className="submit-result">
         <CheckCircle size={56} className="result-icon success" />
         <h2>Content Submitted!</h2>
-        <p>Your content has been sent to the moderation queue. An AI analysis will run shortly.</p>
+        <p>Your content has been queued for AI analysis. You'll see the result in your submissions.</p>
+
+        <div className="result-meta">
+          <div className="result-meta-item">
+            <span className="result-meta-label">Content ID</span>
+            <span className="result-meta-value">#{submitResult.contentId}</span>
+          </div>
+          <div className="result-meta-item">
+            <span className="result-meta-label">Job ID</span>
+            <span className="result-meta-value">#{submitResult.jobId}</span>
+          </div>
+          <div className="result-meta-item">
+            <span className="result-meta-label">Status</span>
+            <span className="status-badge pending">
+              <Clock size={12} /> {submitResult.status}
+            </span>
+          </div>
+        </div>
+
         <button className="submit-btn" onClick={handleReset}>Submit Another</button>
       </div>
     );
   }
 
+  // ─── Form ──────────────────────────────────────────────────────────────────
   return (
     <div className="submit-content-wrapper">
       <div className="submit-header">
@@ -156,7 +191,7 @@ function SubmitContent() {
             ) : (
               <div className="drop-zone-placeholder">
                 <Upload size={40} className="upload-icon" />
-                <p>Drag & drop an image here</p>
+                <p>Drag &amp; drop an image here</p>
                 <span>or click to browse</span>
                 <small>PNG, JPG, WEBP — max {MAX_FILE_SIZE_MB}MB</small>
               </div>
