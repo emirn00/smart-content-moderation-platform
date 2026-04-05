@@ -21,13 +21,15 @@ function Navbar() {
         </div>
         
         <div className="nav-links">
-          <Link 
-            to="/" 
-            className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
-          >
-            <Home size={18} />
-            <span>Home</span>
-          </Link>
+          {(!isAuthenticated || user?.role !== 'MODERATOR') && (
+            <Link 
+              to="/" 
+              className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
+            >
+              <Home size={18} />
+              <span>Home</span>
+            </Link>
+          )}
 
           {isAuthenticated && user?.role === 'MODERATOR' && (
             <Link 

@@ -9,12 +9,15 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import ModerationService from '../services/moderation.service';
 import './ModeratorDashboard.css';
 
 const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444'];
 
 const ModeratorDashboard = () => {
+  const { isAuthenticated, user } = useAuth();
   const [activeTab, setActiveTab] = useState('queue'); // 'queue' or 'history'
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -152,6 +155,10 @@ const ModeratorDashboard = () => {
     if (score > 0.4) return '#f59e0b'; // amber
     return '#10b981'; // green
   };
+
+  if (!isAuthenticated || user?.role !== 'MODERATOR') {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="dashboard-container">

@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { UploadCloud, History } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 import SubmitContent from '../components/SubmitContent';
 import MySubmissions from '../components/MySubmissions';
 import { useAuth } from '../context/AuthContext';
 import './Home.css';
 
 function Home() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [activeTab, setActiveTab] = useState('submit');
+
+  if (isAuthenticated && user?.role === 'MODERATOR') {
+    return <Navigate to="/moderator" replace />;
+  }
 
   return (
     <div className="home-page">
