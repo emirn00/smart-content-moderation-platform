@@ -59,17 +59,10 @@ function Navbar() {
             <>
               <Link 
                 to="/login" 
-                className={`nav-item ${location.pathname === '/login' ? 'active' : ''}`}
+                className={`nav-item nav-item-cta ${location.pathname === '/login' ? 'active' : ''}`}
               >
                 <LogIn size={18} />
                 <span>Login</span>
-              </Link>
-              <Link 
-                to="/register" 
-                className={`nav-item nav-item-cta ${location.pathname === '/register' ? 'active' : ''}`}
-              >
-                <UserPlus size={18} />
-                <span>Register</span>
               </Link>
             </>
           )}
