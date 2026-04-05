@@ -208,8 +208,8 @@ app.post('/analyze/text', async (req, res) => {
     return res.status(400).json({ error: 'text exceeds maximum length of 10,000 characters' });
   }
 
-  // Simulate AI processing time (300 – 900ms)
-  await sleep(rand(300, 900));
+  // Simulate Heavy AI processing time (15 seconds) for queue observation
+  await sleep(15000);
 
   const analysis = analyzeText(text);
   const verdict = computeVerdict(analysis.toxicityScore);
@@ -236,8 +236,8 @@ app.post('/analyze/image', async (req, res) => {
     return res.status(400).json({ error: 'filename or mimeType is required' });
   }
 
-  // Simulate AI processing time (500 – 1500ms for image)
-  await sleep(rand(500, 1500));
+  // Simulate Heavy AI processing time (15-20 seconds) for queue observation
+  await sleep(rand(15000, 20000));
 
   const analysis = analyzeImage(filename, mimeType);
   const verdict = computeVerdict(analysis.toxicityScore);
