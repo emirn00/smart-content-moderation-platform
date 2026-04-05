@@ -16,10 +16,11 @@ app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 const authRoutes    = require('./routes/authRoutes');
 const contentRoutes = require('./routes/contentRoutes');
 const moderationRoutes = require('./routes/moderationRoutes');
+const { apiLimiter, authLimiter } = require('./middlewares/rateLimitMiddleware');
 
-app.use('/api/auth',     authRoutes);
-app.use('/api/contents', contentRoutes);
-app.use('/api/moderation', moderationRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/contents', apiLimiter, contentRoutes);
+app.use('/api/moderation', apiLimiter, moderationRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 const { PrismaClient } = require('@prisma/client');

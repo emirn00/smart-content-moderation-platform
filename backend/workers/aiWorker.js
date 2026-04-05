@@ -88,11 +88,14 @@ const aiWorker = new Worker(
   { connection }
 );
 
-const { sseEmitter } = require('../services/sseService');
+const { redisPublisher, redisClient } = require('../config/redis');
 
-aiWorker.on('completed', (job, result) => {
+aiWorker.on('completed', async (job, result) => {
   console.log(`[aiWorker] ✅ Job ${job.id} completed — content #${result.contentId} is now ${result.status}`);
-  sseEmitter.emit('jobCompleted', result);
+  // Invalidate statistics cache
+  await redisClient.del('moderation:stats');
+  // Broadcast update message over Redis Pub/Sub map
+  redisPublisher.publish('moderation:events', JSON.stringify({ type: 'UPDATE', data: result }));
 });
 
 aiWorker.on('failed', (job, err) => {

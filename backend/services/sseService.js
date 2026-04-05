@@ -1,10 +1,22 @@
-const EventEmitter = require('events');
-
-// Global event emitter for Server-Sent Events
-const sseEmitter = new EventEmitter();
+const { redisSubscriber } = require('../config/redis');
 
 // List of connected moderator clients
 let clients = [];
+
+// Subscribe to the global Redis moderation events channel
+redisSubscriber.subscribe('moderation:events', (err) => {
+  if (err) console.error('🔴 Failed to subscribe to moderation:events channel', err);
+});
+
+// When a message is published from any node instance (or worker), push to our local pool
+redisSubscriber.on('message', (channel, message) => {
+  if (channel === 'moderation:events') {
+    const payload = `data: ${message}\n\n`;
+    clients.forEach((client) => {
+      client.write(payload);
+    });
+  }
+});
 
 /**
  * Express handler to start a new SSE stream.
@@ -27,17 +39,6 @@ const sseStreamHandler = (req, res) => {
   });
 };
 
-/**
- * Standardize and broadcast an event payload to all active clients.
- */
-sseEmitter.on('jobCompleted', (resultData) => {
-  const message = `data: ${JSON.stringify({ type: 'UPDATE', data: resultData })}\n\n`;
-  clients.forEach((client) => {
-    client.write(message);
-  });
-});
-
 module.exports = {
-  sseEmitter,
   sseStreamHandler,
 };

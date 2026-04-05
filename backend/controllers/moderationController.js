@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { redisClient } = require('../config/redis');
 
 /**
  * GET /api/moderation/queue
@@ -105,6 +106,9 @@ const takeModerationAction = async (req, res) => {
 
     console.log(`[moderationController] Content #${content.id} ${normalizedAction}d by moderator #${moderatorId}`);
 
+    // Invalidate the moderation stats cache since data has changed
+    await redisClient.del('moderation:stats');
+
     return res.json({
       success: true,
       message: `Content ${normalizedAction.toLowerCase()}d successfully.`,
@@ -189,6 +193,16 @@ const getAllHistory = async (req, res) => {
  */
 const getModerationStats = async (req, res) => {
   try {
+    // Check Redis Cache first
+    const cachedStats = await redisClient.get('moderation:stats');
+    if (cachedStats) {
+      return res.json({
+        success: true,
+        data: JSON.parse(cachedStats),
+        source: 'redis_cache'
+      });
+    }
+
     const today = new Date();
     const sevenDaysAgo = new Date(today);
     sevenDaysAgo.setDate(today.getDate() - 7);
@@ -243,13 +257,19 @@ const getModerationStats = async (req, res) => {
       },
     });
 
+    const responseData = {
+      timeSeriesData,
+      verdicts: verdicts.map(v => ({ name: v.verdict, value: v._count.id })),
+      statuses: statuses.map(s => ({ name: s.status, value: s._count.id })),
+    };
+
+    // Store in Redis Cache with a Time-To-Live (TTL) of 60 seconds
+    await redisClient.set('moderation:stats', JSON.stringify(responseData), 'EX', 60);
+
     return res.json({
       success: true,
-      data: {
-        timeSeriesData,
-        verdicts: verdicts.map(v => ({ name: v.verdict, value: v._count.id })),
-        statuses: statuses.map(s => ({ name: s.status, value: s._count.id })),
-      },
+      data: responseData,
+      source: 'database'
     });
   } catch (error) {
     console.error('[moderationController] getModerationStats error:', error);
