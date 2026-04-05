@@ -35,13 +35,36 @@ const ModerationService = {
   },
 
   /**
-   * Get all content history.
-   * Only accessible by MODERATOR.
+   * Retrieves all content history with pagination and status filters
    */
-  getAllHistory: async (params = {}) => {
+  getAllHistory: async (params) => {
     const response = await apiClient.get('/moderation/history', { params });
     return response.data;
   },
+
+  /**
+   * Establishes a Server-Sent Events connection to listen for live moderation updates
+   */
+  connectStream: (onMessage) => {
+    const token = localStorage.getItem('token');
+    const baseURL = import.meta.env.VITE_API_URL || '/api';
+    const source = new EventSource(`${baseURL}/moderation/stream?token=${token}`);
+    
+    source.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (onMessage) onMessage(data);
+      } catch (err) {
+        console.error('SSE JSON Parse error:', err);
+      }
+    };
+    
+    source.onerror = (err) => {
+      console.warn('SSE stream error or disconnected. EventSource will auto-reconnect.', err);
+    };
+
+    return source;
+  }
 };
 
 export default ModerationService;

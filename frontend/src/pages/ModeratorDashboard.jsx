@@ -29,6 +29,7 @@ const ModeratorDashboard = () => {
   const [selectedItem, setSelectedItem] = useState(null); // For detail modal
   const [stats, setStats] = useState({ queue: 0, approved: 0, rejected: 0 });
   const [analytics, setAnalytics] = useState({ timeSeries: [], verdicts: [] });
+  const [liveUpdateTrigger, setLiveUpdateTrigger] = useState(0);
 
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
@@ -91,11 +92,25 @@ const ModeratorDashboard = () => {
 
   useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
+  }, [fetchStats, liveUpdateTrigger]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, liveUpdateTrigger]);
+
+  // Subscribe to live Server-Sent Events from the backend
+  useEffect(() => {
+    const sse = ModerationService.connectStream((message) => {
+      if (message.type === 'UPDATE') {
+        // Trigger a fresh data pull silently when background workers finish a job
+        setLiveUpdateTrigger(prev => prev + 1);
+      }
+    });
+
+    return () => {
+      if (sse) sse.close();
+    };
+  }, []);
 
   const handleAction = async (contentId, action) => {
     try {

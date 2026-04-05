@@ -1,14 +1,17 @@
 const jwt = require('jsonwebtoken');
 
 const verifyToken = (req, res, next) => {
+  let token;
   const authHeader = req.headers['authorization'];
-  if (!authHeader) {
-    return res.status(403).json({ message: 'No token provided' });
+  
+  if (authHeader) {
+    token = authHeader.split(' ')[1];
+  } else if (req.query && req.query.token) {
+    token = req.query.token; // Fallback for SSE or other non-header requests
   }
 
-  const token = authHeader.split(' ')[1];
   if (!token) {
-    return res.status(403).json({ message: 'Token format is invalid' });
+    return res.status(403).json({ message: 'No token provided or invalid format' });
   }
 
   try {

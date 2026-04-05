@@ -2,6 +2,18 @@ const express = require('express');
 const router = express.Router();
 const moderationController = require('../controllers/moderationController');
 const { verifyToken, authorizeRole } = require('../middlewares/authMiddleware');
+const { sseStreamHandler } = require('../services/sseService');
+
+/**
+ * Server-Sent Events Stream for live updates
+ * GET /api/moderation/stream
+ */
+router.get(
+  '/stream',
+  verifyToken,
+  authorizeRole(['MODERATOR']),
+  sseStreamHandler
+);
 
 /**
  * Access the Moderation Queue

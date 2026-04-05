@@ -88,8 +88,11 @@ const aiWorker = new Worker(
   { connection }
 );
 
+const { sseEmitter } = require('../services/sseService');
+
 aiWorker.on('completed', (job, result) => {
   console.log(`[aiWorker] ✅ Job ${job.id} completed — content #${result.contentId} is now ${result.status}`);
+  sseEmitter.emit('jobCompleted', result);
 });
 
 aiWorker.on('failed', (job, err) => {
