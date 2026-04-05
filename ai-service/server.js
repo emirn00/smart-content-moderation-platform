@@ -109,24 +109,39 @@ function analyzeText(text) {
  * In a real service this would call a vision model.
  */
 function analyzeImage(filename = '', mimeType = '') {
-  // Randomly assign a risk level — skewed toward safe for demo
-  const dice = Math.random();
+  const lowerName = filename.toLowerCase();
+  
+  // Custom keywords for images
+  const IMG_TOXIC = ['blood', 'weapon', 'nude', 'gore', 'kill', 'gun', 'knife', 'dead'];
+  const IMG_SUSPICIOUS = ['bikini', 'swimsuit', 'fight', 'protest', 'drunk', 'party'];
+  
+  const hasToxicSignal = IMG_TOXIC.some((kw) => lowerName.includes(kw));
+  const hasSuspiciousSignal = IMG_SUSPICIOUS.some((kw) => lowerName.includes(kw));
 
   let toxicityScore;
   let detectedCategories;
 
-  if (dice < 0.15) {
-    // 15% chance high toxicity (e.g. violent image)
-    toxicityScore = rand(0.72, 0.97);
-    detectedCategories = pickRandom(['violence', 'sexual_content', 'hate_speech'], 2);
-  } else if (dice < 0.35) {
-    // 20% chance borderline
-    toxicityScore = rand(0.38, 0.71);
-    detectedCategories = ['sexual_content'];
+  if (hasToxicSignal) {
+    // Highly likely to be toxic based on filename
+    toxicityScore = rand(0.75, 0.98);
+    detectedCategories = pickRandom(['violence', 'sexual_content'], 1);
+  } else if (hasSuspiciousSignal) {
+    // Borderline based on filename
+    toxicityScore = rand(0.40, 0.65);
+    detectedCategories = ['sexual_content', 'safe'].sort(() => 0.5 - Math.random()).slice(0, 1);
   } else {
-    // 65% chance safe
-    toxicityScore = rand(0.01, 0.37);
-    detectedCategories = ['safe'];
+    // Randomly assign a risk level for neutral filenames — skewed heavily toward safe
+    const dice = Math.random();
+    if (dice < 0.05) {
+      toxicityScore = rand(0.72, 0.95);
+      detectedCategories = ['violence'];
+    } else if (dice < 0.15) {
+      toxicityScore = rand(0.38, 0.70);
+      detectedCategories = ['sexual_content'];
+    } else {
+      toxicityScore = rand(0.01, 0.37);
+      detectedCategories = ['safe'];
+    }
   }
 
   const confidence = rand(0.70, 0.98);

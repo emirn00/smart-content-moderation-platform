@@ -14,10 +14,11 @@ const storage = multer.diskStorage({
     cb(null, uploadDir); // Save to the backend/uploads directory
   },
   filename: function (req, file, cb) {
-    // Generate a unique filename: timestamp + random number + original extension
+    // Generate a unique filename: original name + timestamp + random number + original extension
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    const baseName = path.basename(file.originalname, ext).toLowerCase().replace(/[^a-z0-9]/g, '_');
+    cb(null, baseName + '-' + uniqueSuffix + ext);
   }
 });
 
