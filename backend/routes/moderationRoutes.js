@@ -26,6 +26,17 @@ router.post(
 );
 
 /**
+ * Access Moderation Statistics
+ * GET /api/moderation/stats
+ */
+router.get(
+  '/stats',
+  verifyToken,
+  authorizeRole(['MODERATOR']),
+  moderationController.getModerationStats
+);
+
+/**
  * Access the Full Content History
  * GET /api/moderation/history
  */

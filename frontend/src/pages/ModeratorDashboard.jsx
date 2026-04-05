@@ -2,14 +2,22 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Shield, Clock, CheckCircle, XCircle, AlertTriangle, RefreshCw, 
   LayoutDashboard, History, MessageSquare, Image as ImageIcon,
-  ChevronLeft, ChevronRight, Eye, Filter, MoreHorizontal, X
+  ChevronLeft, ChevronRight, Eye, Filter, MoreHorizontal, X,
+  TrendingUp, PieChart as PieChartIcon
 } from 'lucide-react';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
+} from 'recharts';
 import ModerationService from '../services/moderation.service';
 import './ModeratorDashboard.css';
+
+const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444'];
 
 const ModeratorDashboard = () => {
   const [activeTab, setActiveTab] = useState('queue'); // 'queue' or 'history'
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [items, setItems] = useState([]);
   const [pagination, setPagination] = useState({
     totalCount: 0,
@@ -20,6 +28,36 @@ const ModeratorDashboard = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedItem, setSelectedItem] = useState(null); // For detail modal
   const [stats, setStats] = useState({ queue: 0, approved: 0, rejected: 0 });
+  const [analytics, setAnalytics] = useState({ timeSeries: [], verdicts: [] });
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const result = await ModerationService.getStats();
+      if (result.success) {
+        setAnalytics({
+          timeSeries: result.data.timeSeriesData,
+          verdicts: result.data.verdicts
+        });
+        
+        // Update summary stats based on all statuses
+        const statusMap = result.data.statuses.reduce((acc, curr) => {
+          acc[curr.name] = curr.value;
+          return acc;
+        }, {});
+        
+        setStats({
+          queue: statusMap['FLAGGED'] || 0,
+          approved: statusMap['APPROVED'] || 0,
+          rejected: statusMap['REJECTED'] || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -34,14 +72,9 @@ const ModeratorDashboard = () => {
       if (activeTab === 'queue') {
         result = await ModerationService.getQueue(params);
         setItems(result.queue || []);
-        setStats(prev => ({ ...prev, queue: result.totalCount || 0 }));
       } else {
         result = await ModerationService.getAllHistory(params);
         setItems(result.history || []);
-        // Update stats summary (could also fetch these separately if needed)
-        // For simplicity, we'll use the total count from the history API if filtering by status
-        if (statusFilter === 'APPROVED') setStats(prev => ({ ...prev, approved: result.totalCount }));
-        if (statusFilter === 'REJECTED') setStats(prev => ({ ...prev, rejected: result.totalCount }));
       }
 
       setPagination(prev => ({
@@ -57,6 +90,10 @@ const ModeratorDashboard = () => {
   }, [activeTab, pagination.currentPage, pagination.limit, statusFilter]);
 
   useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  useEffect(() => {
     fetchData();
   }, [fetchData]);
 
@@ -67,6 +104,7 @@ const ModeratorDashboard = () => {
         setSelectedItem(null);
       }
       fetchData();
+      fetchStats(); // Refresh charts too
     } catch (error) {
       console.error(`Error taking action ${action}:`, error);
     }
@@ -112,11 +150,96 @@ const ModeratorDashboard = () => {
             <p className="subtitle">Analyze and manage smart content moderation system.</p>
           </div>
         </div>
-        <button className="refresh-btn nav-item-cta" onClick={fetchData} disabled={loading}>
-          <RefreshCw size={18} className={loading ? 'spinning' : ''} />
+        <button className="refresh-btn nav-item-cta" onClick={() => { fetchData(); fetchStats(); }} disabled={loading}>
+          <RefreshCw size={18} className={loading || statsLoading ? 'spinning' : ''} />
           <span>Refresh</span>
         </button>
       </header>
+
+      {/* Analytics Section */}
+      <section className="analytics-section">
+        <div className="chart-card shadow-premium fade-in">
+          <div className="chart-header">
+            <TrendingUp size={20} className="chart-icon-color" />
+            <h3>Content Submission Trends (Last 7 Days)</h3>
+          </div>
+          <div className="chart-container">
+            {statsLoading ? (
+              <div className="chart-loader"><RefreshCw className="spinning" size={24} /></div>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart data={analytics.timeSeries}>
+                  <defs>
+                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fontSize: 12, fill: '#94a3b8'}}
+                    dy={10}
+                    tickFormatter={(str) => {
+                      const date = new Date(str);
+                      return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+                    }}
+                  />
+                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                    itemStyle={{ fontSize: '14px', fontWeight: 'bold' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="count" 
+                    stroke="#6366f1" 
+                    strokeWidth={3}
+                    fillOpacity={1} 
+                    fill="url(#colorCount)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        <div className="chart-card shadow-premium fade-in">
+          <div className="chart-header">
+            <PieChartIcon size={20} className="chart-icon-color" />
+            <h3>AI Moderation Verdicts Ratio</h3>
+          </div>
+          <div className="chart-container">
+            {statsLoading ? (
+              <div className="chart-loader"><RefreshCw className="spinning" size={24} /></div>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie
+                    data={analytics.verdicts}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {analytics.verdicts.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36}/>
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      </section>
 
       <div className="stats-grid">
         <div className="stat-card queue-stat">

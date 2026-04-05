@@ -26,6 +26,15 @@ const ModerationService = {
   },
 
   /**
+   * Get moderation statistics for charts.
+   * Only accessible by MODERATOR.
+   */
+  getStats: async () => {
+    const response = await apiClient.get('/api/moderation/stats');
+    return response.data;
+  },
+
+  /**
    * Get all content history.
    * Only accessible by MODERATOR.
    */

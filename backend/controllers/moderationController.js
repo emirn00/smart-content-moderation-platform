@@ -182,8 +182,84 @@ const getAllHistory = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/moderation/stats
+ * Returns summary statistics and time-series data for visuals.
+ * Only accessible by MODERATOR role.
+ */
+const getModerationStats = async (req, res) => {
+  try {
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+
+    // 1. Time-series Data (last 7 days)
+    const dailySubmissions = await prisma.content.groupBy({
+      by: ['createdAt'],
+      where: {
+        createdAt: {
+          gte: sevenDaysAgo,
+        },
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    // Post-process grouping by date only
+    const dailyMap = {};
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(sevenDaysAgo);
+      d.setDate(sevenDaysAgo.getDate() + i + 1);
+      const dateStr = d.toISOString().split('T')[0];
+      dailyMap[dateStr] = 0;
+    }
+
+    dailySubmissions.forEach(sub => {
+      const dateStr = sub.createdAt.toISOString().split('T')[0];
+      if (dailyMap[dateStr] !== undefined) {
+        dailyMap[dateStr] += sub._count.id;
+      }
+    });
+
+    const timeSeriesData = Object.keys(dailyMap).map(date => ({
+      date,
+      count: dailyMap[date],
+    }));
+
+    // 2. Verdict Distribution (AiAnalysisResult)
+    const verdicts = await prisma.aiAnalysisResult.groupBy({
+      by: ['verdict'],
+      _count: {
+        id: true,
+      },
+    });
+
+    // 3. Status Distribution (Content)
+    const statuses = await prisma.content.groupBy({
+      by: ['status'],
+      _count: {
+        id: true,
+      },
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        timeSeriesData,
+        verdicts: verdicts.map(v => ({ name: v.verdict, value: v._count.id })),
+        statuses: statuses.map(s => ({ name: s.status, value: s._count.id })),
+      },
+    });
+  } catch (error) {
+    console.error('[moderationController] getModerationStats error:', error);
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
 module.exports = {
   getModerationQueue,
   takeModerationAction,
   getAllHistory,
+  getModerationStats,
 };
