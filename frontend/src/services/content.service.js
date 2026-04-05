@@ -6,7 +6,7 @@ const ContentService = {
    * @param {string} body - The text content
    */
   submitText: async (body) => {
-    const response = await apiClient.post('/api/contents', {
+    const response = await apiClient.post('/contents', {
       type: 'TEXT',
       body,
     });
@@ -20,7 +20,7 @@ const ContentService = {
    * @param {number} sizeBytes - File size in bytes
    */
   submitImage: async (filename, mimeType, sizeBytes) => {
-    const response = await apiClient.post('/api/contents', {
+    const response = await apiClient.post('/contents', {
       type: 'IMAGE',
       filename,
       mimeType,
@@ -33,7 +33,7 @@ const ContentService = {
    * Get all contents submitted by the current user.
    */
   getMyContents: async () => {
-    const response = await apiClient.get('/api/contents/me');
+    const response = await apiClient.get('/contents/me');
     return response.data;
   },
 
@@ -41,7 +41,7 @@ const ContentService = {
    * Get a specific content by ID.
    */
   getContentById: async (id) => {
-    const response = await apiClient.get(`/api/contents/${id}`);
+    const response = await apiClient.get(`/contents/${id}`);
     return response.data;
   },
 };

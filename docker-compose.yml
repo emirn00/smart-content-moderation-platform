@@ -54,7 +54,7 @@ services:
       - db
       - redis
       - ai-service
-    command: npm run dev
+    command: sh -c "npx prisma migrate deploy && npm run dev"
 
   web:
     build:

@@ -6,7 +6,7 @@ const ModerationService = {
    * Only accessible by MODERATOR.
    */
   getQueue: async (params = {}) => {
-    const response = await apiClient.get('/api/moderation/queue', { params });
+    const response = await apiClient.get('/moderation/queue', { params });
     return response.data;
   },
 
@@ -17,7 +17,7 @@ const ModerationService = {
    * @param {string} [reason] - Optional reason for the action
    */
   takeAction: async (contentId, action, reason) => {
-    const response = await apiClient.post('/api/moderation/action', {
+    const response = await apiClient.post('/moderation/action', {
       contentId,
       action,
       reason,
@@ -30,7 +30,7 @@ const ModerationService = {
    * Only accessible by MODERATOR.
    */
   getStats: async () => {
-    const response = await apiClient.get('/api/moderation/stats');
+    const response = await apiClient.get('/moderation/stats');
     return response.data;
   },
 
@@ -39,7 +39,7 @@ const ModerationService = {
    * Only accessible by MODERATOR.
    */
   getAllHistory: async (params = {}) => {
-    const response = await apiClient.get('/api/moderation/history', { params });
+    const response = await apiClient.get('/moderation/history', { params });
     return response.data;
   },
 };

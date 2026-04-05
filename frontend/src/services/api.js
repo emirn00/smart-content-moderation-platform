@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Vite üzerinden ortam değişkenine erişim.
 // Eğer ortam değişkeni bulunamazsa varsayılan olarak localhost:5001 kullanılır.
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,
