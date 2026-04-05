@@ -55,6 +55,8 @@ services:
       - redis
       - ai-service
     command: sh -c "npx prisma migrate deploy && npm run dev"
+    volumes:
+      - ./backend/uploads:/app/uploads
 
   web:
     build:

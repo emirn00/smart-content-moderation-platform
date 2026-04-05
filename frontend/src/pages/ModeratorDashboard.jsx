@@ -347,7 +347,7 @@ const ModeratorDashboard = () => {
                           <span className="text-truncate">{item.body}</span>
                         ) : (
                           <div className="img-thumb-mini">
-                            <ImageIcon size={14} />
+                            <img src={`/api/uploads/${item.filename}`} alt={item.filename} style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
                             <span>{item.filename}</span>
                           </div>
                         )}
@@ -471,8 +471,8 @@ const ModeratorDashboard = () => {
                   </div>
                 ) : (
                   <div className="full-image-preview glass-panel">
-                    <ImageIcon size={48} />
-                    <p>{selectedItem.filename}</p>
+                    <img src={`/api/uploads/${selectedItem.filename}`} alt={selectedItem.filename} style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '8px', marginBottom: '12px', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
+                    <p style={{ textAlign: 'center', fontWeight: 'bold' }}>{selectedItem.filename}</p>
                     <div className="image-meta">
                       <span>MIME: {selectedItem.mimeType}</span>
                       <span>Size: {(selectedItem.sizeBytes / 1024).toFixed(1)} KB</span>

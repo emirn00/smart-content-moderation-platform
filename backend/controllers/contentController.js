@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 const submitContent = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { type, body, filename, mimeType, sizeBytes } = req.body;
+    const { type, body } = req.body;
 
     // Validate type
     if (!type || !['TEXT', 'IMAGE'].includes(type.toUpperCase())) {
@@ -30,10 +30,17 @@ const submitContent = async (req, res) => {
       }
     }
 
+    let filename = null;
+    let mimeType = null;
+    let sizeBytes = null;
+
     if (contentType === 'IMAGE') {
-      if (!filename) {
-        return res.status(400).json({ message: 'filename is required for image content' });
+      if (!req.file) {
+        return res.status(400).json({ message: 'Image file is required for image content' });
       }
+      filename = req.file.filename;
+      mimeType = req.file.mimetype;
+      sizeBytes = req.file.size;
     }
 
     // Create the content record with PENDING status

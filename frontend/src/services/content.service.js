@@ -15,16 +15,17 @@ const ContentService = {
 
   /**
    * Submit image metadata for AI moderation.
-   * @param {string} filename - The file name
-   * @param {string} mimeType - e.g. 'image/jpeg'
-   * @param {number} sizeBytes - File size in bytes
+   * @param {File} file - The actual image file object
    */
-  submitImage: async (filename, mimeType, sizeBytes) => {
-    const response = await apiClient.post('/contents', {
-      type: 'IMAGE',
-      filename,
-      mimeType,
-      sizeBytes,
+  submitImage: async (file) => {
+    const formData = new FormData();
+    formData.append('type', 'IMAGE');
+    formData.append('image', file);
+
+    const response = await apiClient.post('/contents', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response.data;
   },

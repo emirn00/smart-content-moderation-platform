@@ -9,6 +9,9 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
+const path = require('path');
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // ─── Routes ──────────────────────────────────────────────────────────────────
 const authRoutes    = require('./routes/authRoutes');
 const contentRoutes = require('./routes/contentRoutes');

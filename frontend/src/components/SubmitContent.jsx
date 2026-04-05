@@ -64,11 +64,7 @@ function SubmitContent() {
       if (contentType === 'text') {
         result = await ContentService.submitText(text.trim());
       } else {
-        result = await ContentService.submitImage(
-          imageFile.name,
-          imageFile.type,
-          imageFile.size
-        );
+        result = await ContentService.submitImage(imageFile);
       }
       setSubmitResult(result);
     } catch (err) {
