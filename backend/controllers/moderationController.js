@@ -8,28 +8,44 @@ const prisma = new PrismaClient();
  */
 const getModerationQueue = async (req, res) => {
   try {
-    const queue = await prisma.content.findMany({
-      where: {
-        status: 'FLAGGED',
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-          },
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const [queue, totalCount] = await prisma.$transaction([
+      prisma.content.findMany({
+        where: {
+          status: 'FLAGGED',
         },
-        aiAnalysisResult: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            },
+          },
+          aiAnalysisResult: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.content.count({
+        where: {
+          status: 'FLAGGED',
+        },
+      }),
+    ]);
 
     return res.json({
       success: true,
       count: queue.length,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
       queue
     });
   } catch (error) {
@@ -111,25 +127,53 @@ const takeModerationAction = async (req, res) => {
  */
 const getAllHistory = async (req, res) => {
   try {
-    const history = await prisma.content.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const status = req.query.status; // Optional status filter
+
+    const where = {};
+    if (status && status !== 'ALL') {
+      // Handle the case where "PENDING" might refer to multiple statuses
+      if (status === 'PENDING') {
+        where.status = {
+          in: ['PENDING', 'FLAGGED']
+        };
+      } else {
+        where.status = status;
+      }
+    }
+
+    const [history, totalCount] = await prisma.$transaction([
+      prisma.content.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            },
           },
+          aiAnalysisResult: true,
         },
-        aiAnalysisResult: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.content.count({
+        where,
+      }),
+    ]);
 
     return res.json({
       success: true,
       count: history.length,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
       history
     });
   } catch (error) {

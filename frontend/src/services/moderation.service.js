@@ -5,8 +5,8 @@ const ModerationService = {
    * Get the moderation queue (content items with FLAGGED status).
    * Only accessible by MODERATOR.
    */
-  getQueue: async () => {
-    const response = await apiClient.get('/api/moderation/queue');
+  getQueue: async (params = {}) => {
+    const response = await apiClient.get('/api/moderation/queue', { params });
     return response.data;
   },
 
@@ -29,8 +29,8 @@ const ModerationService = {
    * Get all content history.
    * Only accessible by MODERATOR.
    */
-  getAllHistory: async () => {
-    const response = await apiClient.get('/api/moderation/history');
+  getAllHistory: async (params = {}) => {
+    const response = await apiClient.get('/api/moderation/history', { params });
     return response.data;
   },
 };
